@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Environment
+.env
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Caches / Scratch
+data/geocoding_cache.json
+data/geocoding_failed.json
+db.sqlite3
+*.log
+scratch/
+
+# Build
+*.egg-info/
+dist/
+build/

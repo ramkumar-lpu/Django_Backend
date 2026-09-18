@@ -189,11 +189,11 @@ This is a mathematically verified cost-minimizing greedy strategy for the fixed-
 
 **The initial full tank is NOT counted as a purchase.**
 
-## Performance
-
-- **Preprocessing**: Station data is geocoded offline (one-time), not during API requests
-- **Caching**: Geocoding and routing results are cached in memory (24h TTL)
-- **Spatial filtering**: Bounding box pre-filter + Shapely distance check — O(stations) with constant factor optimization
+### Assumptions & Limitations
+- **Vehicle specs:** 10 MPG, 500-mile max range.
+- **Initial fuel:** Vehicle starts with a full tank (50 gallons), which is "free" (not counted towards total cost).
+- **Geocoding Approximation:** Station coordinates are geocoded offline at the **City + State** level, rather than exact street addresses, due to batch geocoding limitations and processing times. This is an approximation.
+- **Performance:** Offline preprocessing eliminates runtime CSV parsing and rate-limits. Runtime requires 1 routing call and 2 geocoding calls per request.
 - **Minimal API calls**: 1 routing call + 2 geocoding calls per request (all cached on repeat)
 - **No CSV parsing at runtime**: Preprocessed JSON is loaded once into memory
 

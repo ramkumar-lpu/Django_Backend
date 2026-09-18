@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuel Route Optimizer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        #map { height: 500px; border-radius: 0.5rem; }
+        .stat-card { @apply bg-white p-4 rounded-lg shadow border border-gray-200 text-center; }
+        .stat-value { @apply text-2xl font-bold text-blue-600; }
+        .stat-label { @apply text-xs text-gray-500 uppercase tracking-wider mt-1; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans text-gray-800">
+
+<div class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+    <header class="mb-8 flex items-center justify-between border-b pb-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Fuel Route Optimizer</h1>
+            <p class="text-gray-500 mt-1">Calculate the most cost-effective fueling strategy.</p>
+        </div>
+        <div class="text-right text-sm text-gray-500 hidden sm:block">
+            <p><strong>Vehicle:</strong> 500 mi range, 10 MPG</p>
+            <p><strong>Initial Tank:</strong> 50 Gal (Free)</p>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left Panel: Form & Stats -->
+        <div class="lg:col-span-1 space-y-6">
+            <!-- Form -->
+            <div class="bg-white p-6 rounded-lg shadow border border-gray-200">
+                <form id="routeForm" class="space-y-4">
+                    <div>
+                        <label for="start" class="block text-sm font-medium text-gray-700">Start Location</label>
+                        <input type="text" id="start" value="Dallas, TX" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="finish" class="block text-sm font-medium text-gray-700">Destination</label>
+                        <input type="text" id="finish" value="Los Angeles, CA" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <button type="submit" id="submitBtn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        Calculate Route
+                    </button>
+                </form>
+                <div id="errorBox" class="mt-4 hidden p-3 bg-red-100 text-red-700 rounded text-sm"></div>
+            </div>
+
+            <!-- Stats (Hidden Initially) -->
+            <div id="resultsSummary" class="hidden space-y-4">
+                <h3 class="font-semibold text-lg text-gray-900 border-b pb-2">Trip Summary</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="stat-card">
+                        <div id="valDist" class="stat-value">-</div>
+                        <div class="stat-label">Miles</div>
+                    </div>
+                    <div class="stat-card">
+                        <div id="valCost" class="stat-value text-green-600">-</div>
+                        <div class="stat-label">Total Cost</div>
+                    </div>
+                    <div class="stat-card">
+                        <div id="valGal" class="stat-value">-</div>
+                        <div class="stat-label">Gallons</div>
+                    </div>
+                    <div class="stat-card">
+                        <div id="valStops" class="stat-value">-</div>
+                        <div class="stat-label">Stops</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Map & Table -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <div class="bg-white p-2 rounded-lg shadow border border-gray-200">
+                <div id="map"></div>
+            </div>
+
+            <!-- Stops Table -->
+            <div id="stopsContainer" class="hidden bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                    <h3 class="text-sm font-medium text-gray-700">Optimized Fuel Stops</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">#</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Station</th>
+                                <th class="px-4 py-3 text-right font-medium text-gray-500 uppercase tracking-wider">Price/Gal</th>
+                                <th class="px-4 py-3 text-right font-medium text-gray-500 uppercase tracking-wider">Purchased</th>
+                                <th class="px-4 py-3 text-right font-medium text-gray-500 uppercase tracking-wider">Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stopsTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Rows injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Initialize Map
+    const map = L.map('map').setView([39.8283, -98.5795], 4); // Center of US
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 18,
+    }).addTo(map);
+
+    let routeLayer = null;
+    let markers = [];
+
+    const form = document.getElementById('routeForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const errorBox = document.getElementById('errorBox');
+    const resultsSummary = document.getElementById('resultsSummary');
+    const stopsContainer = document.getElementById('stopsContainer');
+    const stopsTableBody = document.getElementById('stopsTableBody');
+
+    function clearMap() {
+        if (routeLayer) map.removeLayer(routeLayer);
+        markers.forEach(m => map.removeLayer(m));
+        markers = [];
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const start = document.getElementById('start').value;
+        const finish = document.getElementById('finish').value;
+        
+        // UI Reset
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Calculating (this may take a few seconds)...';
+        errorBox.classList.add('hidden');
+        resultsSummary.classList.add('hidden');
+        stopsContainer.classList.add('hidden');
+        clearMap();
+
+        try {
+            // Handle cases where the HTML is opened directly from the filesystem vs served by Django
+            const baseUrl = window.location.protocol === 'file:' ? 'http://localhost:8000' : '';
+            const apiUrl = baseUrl + '/api/route/';
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ start, finish })
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to calculate route');
+            }
+
+            // Update Summary
+            document.getElementById('valDist').textContent = data.route.distance_miles.toFixed(1);
+            document.getElementById('valCost').textContent = '$' + data.fuel.total_cost.toFixed(2);
+            document.getElementById('valGal').textContent = data.fuel.total_purchased_gallons.toFixed(1);
+            document.getElementById('valStops').textContent = data.fuel_stops.length;
+            resultsSummary.classList.remove('hidden');
+
+            // Draw Route
+            if (data.route.geometry) {
+                // GeoJSON coordinates are [lon, lat], Leaflet expects [lat, lon]
+                const geoJsonLayer = L.geoJSON(data.route.geometry, {
+                    style: { color: '#2563eb', weight: 4, opacity: 0.7 }
+                }).addTo(map);
+                routeLayer = geoJsonLayer;
+                map.fitBounds(geoJsonLayer.getBounds(), { padding: [30, 30] });
+
+                // Add Start/End Markers
+                const coords = data.route.geometry.coordinates;
+                const startCoord = coords[0];
+                const endCoord = coords[coords.length - 1];
+                
+                markers.push(L.marker([startCoord[1], startCoord[0]]).addTo(map).bindPopup(`<b>Start:</b> ${start}`));
+                markers.push(L.marker([endCoord[1], endCoord[0]]).addTo(map).bindPopup(`<b>Finish:</b> ${finish}`));
+            }
+
+            // Update Table & Stop Markers
+            stopsTableBody.innerHTML = '';
+            if (data.fuel_stops.length > 0) {
+                stopsContainer.classList.remove('hidden');
+                
+                data.fuel_stops.forEach((stop, index) => {
+                    // Marker
+                    const m = L.circleMarker([stop.latitude, stop.longitude], {
+                        color: '#dc2626',
+                        fillColor: '#ef4444',
+                        fillOpacity: 0.8,
+                        radius: 6
+                    }).addTo(map).bindPopup(`
+                        <b>Stop ${index + 1}: ${stop.truckstop_name}</b><br>
+                        $${stop.price_per_gallon.toFixed(2)}/gal<br>
+                        Bought: ${stop.gallons_purchased.toFixed(1)} gal
+                    `);
+                    markers.push(m);
+
+                    // Table Row
+                    const tr = document.createElement('tr');
+                    const cost = stop.price_per_gallon * stop.gallons_purchased;
+                    tr.innerHTML = `
+                        <td class="px-4 py-3 whitespace-nowrap">${index + 1}</td>
+                        <td class="px-4 py-3"><div class="font-medium text-gray-900">${stop.truckstop_name}</div><div class="text-xs text-gray-500">${stop.city}, ${stop.state}</div></td>
+                        <td class="px-4 py-3 whitespace-nowrap text-right">$${stop.price_per_gallon.toFixed(3)}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-right">${stop.gallons_purchased.toFixed(1)}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-right font-medium text-gray-900">$${cost.toFixed(2)}</td>
+                    `;
+                    stopsTableBody.appendChild(tr);
+                });
+            }
+
+        } catch (err) {
+            errorBox.textContent = err.message;
+            errorBox.classList.remove('hidden');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Calculate Route';
+        }
+    });
+</script>
+</body>
+</html>

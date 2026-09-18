@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: fuel_route_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      # Exclude specific local folders from overriding the container
+      - /app/venv
+      - /app/.venv
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-docker-demo-key
+      - ROUTE_STATION_RADIUS_MILES=10.0
+      - VEHICLE_MAX_RANGE_MILES=500
+      - VEHICLE_MPG=10
+    restart: unless-stopped
