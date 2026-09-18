@@ -94,32 +94,34 @@ def validate_us_coordinates(lat, lon):
     return False
 
 
-def geocode_nominatim(query, max_retries=3):
-    """Geocode using Nominatim (free OSM geocoder, no API key needed).
-    Rate limit: 1 request per second (enforced by caller).
-    """
+GEOCODE_DELAY = 0.2  # 5 requests per second (OpenMeteo limit is 600/min)
+
+def geocode_openmeteo(city, state, max_retries=3):
+    """Geocode using OpenMeteo (free, no API key, 10k/day limit)."""
     import requests
-    url = "https://nominatim.openstreetmap.org/search"
-    params = {'q': query, 'format': 'json', 'limit': 1, 'countrycodes': 'us'}
-    headers = {'User-Agent': 'Mozilla/5.0 (FuelRouteAssessment/1.0)'}
+    url = "https://geocoding-api.open-meteo.com/v1/search"
+    params = {'name': city, 'count': 10, 'format': 'json'}
+    state_full = STATE_NAMES.get(state, state)
+    
     for attempt in range(max_retries):
         try:
-            resp = requests.get(url, params=params, headers=headers, timeout=30)
+            resp = requests.get(url, params=params, timeout=10)
             if resp.status_code == 200:
                 data = resp.json()
-                if data:
-                    return float(data[0]['lat']), float(data[0]['lon'])
+                for r in data.get('results', []):
+                    if r.get('country_code') == 'US' and r.get('admin1', '').lower() == state_full.lower():
+                        return float(r['latitude']), float(r['longitude'])
                 return None, None
             elif resp.status_code == 429:
-                wait = 60 * (attempt + 1)
+                wait = 10 * (attempt + 1)
                 log(f"  Rate limit hit (attempt {attempt+1}/{max_retries}), sleeping {wait}s...")
                 time.sleep(wait)
             else:
-                log(f"  Nominatim returned HTTP {resp.status_code} for '{query}'")
+                log(f"  OpenMeteo returned HTTP {resp.status_code} for '{city}, {state}'")
                 return None, None
         except Exception as e:
-            log(f"  Geocoding error for '{query}': {e}")
-            return None, None
+            log(f"  Geocoding error for '{city}, {state}': {e}")
+            time.sleep(2)
     return None, None
 
 
@@ -171,11 +173,7 @@ def geocode_city_states(city_state_pairs, cache, failed):
             failed_count += 1
             continue
 
-        # Build query: "City, State Full Name, United States"
-        state_name = STATE_NAMES.get(state, state)
-        query = f"{city}, {state_name}, United States"
-
-        lat, lon = geocode_nominatim(query)
+        lat, lon = geocode_openmeteo(city, state)
         api_calls += 1
         time.sleep(GEOCODE_DELAY)
 
@@ -183,7 +181,7 @@ def geocode_city_states(city_state_pairs, cache, failed):
             cache[cache_key] = {'lat': lat, 'lon': lon}
             geocoded_count += 1
         else:
-            failed[cache_key] = f"Not found or invalid: query='{query}'"
+            failed[cache_key] = f"Not found or invalid: city='{city}', state='{state}'"
             failed_count += 1
 
         # Save caches periodically
