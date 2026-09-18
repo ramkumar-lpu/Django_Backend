@@ -1,0 +1,112 @@
+OPIS Truckstop ID,Truckstop Name,Address,City,State,Rack ID,Retail Price
+10001,Station 1,1 Main St,Anytown,NJ,20001,3.355
+10002,Station 2,2 Main St,Anytown,TX,20002,5.1
+10003,Station 3,3 Main St,Anytown,MD,20003,4.226
+10004,Station 4,4 Main St,Anytown,UT,20004,4.795
+10005,Station 5,5 Main St,Anytown,IN,20005,3.437
+10006,Station 6,6 Main St,Anytown,UT,20006,2.906
+10007,Station 7,7 Main St,Anytown,CA,20007,2.566
+10008,Station 8,8 Main St,Anytown,VA,20008,5.163
+10009,Station 9,9 Main St,Anytown,VA,20009,2.94
+10010,Station 10,10 Main St,Anytown,IN,20010,2.833
+10011,Station 11,11 Main St,Anytown,NE,20011,4.016
+10012,Station 12,12 Main St,Anytown,IN,20012,4.387
+10013,Station 13,13 Main St,Anytown,TX,20013,3.845
+10014,Station 14,14 Main St,Anytown,MD,20014,5.124
+10015,Station 15,15 Main St,Anytown,IN,20015,4.123
+10016,Station 16,16 Main St,Anytown,FL,20016,4.977
+10017,Station 17,17 Main St,Anytown,GA,20017,3.146
+10018,Station 18,18 Main St,Anytown,OH,20018,2.835
+10019,Station 19,19 Main St,Anytown,OH,20019,5.163
+10020,Station 20,20 Main St,Anytown,IA,20020,5.445
+10021,Station 21,21 Main St,Anytown,CA,20021,3.94
+10022,Station 22,22 Main St,Anytown,VA,20022,4.634
+10023,Station 23,23 Main St,Anytown,NJ,20023,2.826
+10024,Station 24,24 Main St,Anytown,NV,20024,5.272
+10025,Station 25,25 Main St,Anytown,MD,20025,4.866
+10026,Station 26,26 Main St,Anytown,IN,20026,3.051
+10027,Station 27,27 Main St,Anytown,IL,20027,2.712
+10028,Station 28,28 Main St,Anytown,CO,20028,4.42
+10029,Station 29,29 Main St,Anytown,NY,20029,3.814
+10030,Station 30,30 Main St,Anytown,GA,20030,3.755
+10031,Station 31,31 Main St,Anytown,PA,20031,3.189
+10032,Station 32,32 Main St,Anytown,VA,20032,5.102
+10033,Station 33,33 Main St,Anytown,CA,20033,2.795
+10034,Station 34,34 Main St,Anytown,IL,20034,3.461
+10035,Station 35,35 Main St,Anytown,NV,20035,5.078
+10036,Station 36,36 Main St,Anytown,MD,20036,2.801
+10037,Station 37,37 Main St,Anytown,NY,20037,4.407
+10038,Station 38,38 Main St,Anytown,IN,20038,2.75
+10039,Station 39,39 Main St,Anytown,VA,20039,5.171
+10040,Station 40,40 Main St,Anytown,IA,20040,3.173
+10041,Station 41,41 Main St,Anytown,IA,20041,5.027
+10042,Station 42,42 Main St,Anytown,IN,20042,2.627
+10043,Station 43,43 Main St,Anytown,PA,20043,5.16
+10044,Station 44,44 Main St,Anytown,NE,20044,4.193
+10045,Station 45,45 Main St,Anytown,NY,20045,4.788
+10046,Station 46,46 Main St,Anytown,IL,20046,3.943
+10047,Station 47,47 Main St,Anytown,MD,20047,2.606
+10048,Station 48,48 Main St,Anytown,NV,20048,3.024
+10049,Station 49,49 Main St,Anytown,CA,20049,3.898
+10050,Station 50,50 Main St,Anytown,PA,20050,2.764
+10051,Station 51,51 Main St,Anytown,OH,20051,5.178
+10052,Station 52,52 Main St,Anytown,GA,20052,3.255
+10053,Station 53,53 Main St,Anytown,NV,20053,3.993
+10054,Station 54,54 Main St,Anytown,IA,20054,3.421
+10055,Station 55,55 Main St,Anytown,IN,20055,4.588
+10056,Station 56,56 Main St,Anytown,NY,20056,2.831
+10057,Station 57,57 Main St,Anytown,TX,20057,2.884
+10058,Station 58,58 Main St,Anytown,CA,20058,3.881
+10059,Station 59,59 Main St,Anytown,GA,20059,2.914
+10060,Station 60,60 Main St,Anytown,CO,20060,5.258
+10061,Station 61,61 Main St,Anytown,NV,20061,4.747
+10062,Station 62,62 Main St,Anytown,IN,20062,2.588
+10063,Station 63,63 Main St,Anytown,NE,20063,3.158
+10064,Station 64,64 Main St,Anytown,UT,20064,2.778
+10065,Station 65,65 Main St,Anytown,VA,20065,4.521
+10066,Station 66,66 Main St,Anytown,IN,20066,3.129
+10067,Station 67,67 Main St,Anytown,OH,20067,3.838
+10068,Station 68,68 Main St,Anytown,NY,20068,3.462
+10069,Station 69,69 Main St,Anytown,PA,20069,3.712
+10070,Station 70,70 Main St,Anytown,TX,20070,4.019
+10071,Station 71,71 Main St,Anytown,MD,20071,4.582
+10072,Station 72,72 Main St,Anytown,OH,20072,3.228
+10073,Station 73,73 Main St,Anytown,PA,20073,3.924
+10074,Station 74,74 Main St,Anytown,CA,20074,5.223
+10075,Station 75,75 Main St,Anytown,UT,20075,4.066
+10076,Station 76,76 Main St,Anytown,NE,20076,4.382
+10077,Station 77,77 Main St,Anytown,IA,20077,4.134
+10078,Station 78,78 Main St,Anytown,TX,20078,3.252
+10079,Station 79,79 Main St,Anytown,NY,20079,4.221
+10080,Station 80,80 Main St,Anytown,PA,20080,4.963
+10081,Station 81,81 Main St,Anytown,TX,20081,4.12
+10082,Station 82,82 Main St,Anytown,IN,20082,3.877
+10083,Station 83,83 Main St,Anytown,CA,20083,4.859
+10084,Station 84,84 Main St,Anytown,CO,20084,2.891
+10085,Station 85,85 Main St,Anytown,VA,20085,3.008
+10086,Station 86,86 Main St,Anytown,TX,20086,3.589
+10087,Station 87,87 Main St,Anytown,GA,20087,4.584
+10088,Station 88,88 Main St,Anytown,IL,20088,3.124
+10089,Station 89,89 Main St,Anytown,IA,20089,3.669
+10090,Station 90,90 Main St,Anytown,MD,20090,3.142
+10091,Station 91,91 Main St,Anytown,IN,20091,3.326
+10092,Station 92,92 Main St,Anytown,NV,20092,3.656
+10093,Station 93,93 Main St,Anytown,VA,20093,5.28
+10094,Station 94,94 Main St,Anytown,FL,20094,5.18
+10095,Station 95,95 Main St,Anytown,NY,20095,3.674
+10096,Station 96,96 Main St,Anytown,OH,20096,5.06
+10097,Station 97,97 Main St,Anytown,NE,20097,3.02
+10098,Station 98,98 Main St,Anytown,FL,20098,4.549
+10099,Station 99,99 Main St,Anytown,IN,20099,3.647
+10100,Station 100,100 Main St,Anytown,IA,20100,4.533
+50000,Route 80 Stop NY,100 Highway 80,RouteCity,NY,60000,3.701
+50001,Route 80 Stop PA,100 Highway 80,RouteCity,PA,60001,3.162
+50002,Route 80 Stop OH,100 Highway 80,RouteCity,OH,60002,4.454
+50003,Route 80 Stop IN,100 Highway 80,RouteCity,IN,60003,3.567
+50004,Route 80 Stop IL,100 Highway 80,RouteCity,IL,60004,4.147
+50005,Route 80 Stop IA,100 Highway 80,RouteCity,IA,60005,2.964
+50006,Route 80 Stop NE,100 Highway 80,RouteCity,NE,60006,2.919
+50007,Route 80 Stop WY,100 Highway 80,RouteCity,WY,60007,2.812
+50008,Route 80 Stop UT,100 Highway 80,RouteCity,UT,60008,3.522
+50009,Route 80 Stop NV,100 Highway 80,RouteCity,NV,60009,3.766
+50010,Route 80 Stop CA,100 Highway 80,RouteCity,CA,60010,4.397
