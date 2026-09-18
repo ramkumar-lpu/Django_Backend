@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <!-- MapLibre GL CSS -->
+    <link href="https://unpkg.com/maplibre-gl@3.3.1/dist/maplibre-gl.css" rel="stylesheet" />
     <style>
         #map { height: 500px; border-radius: 0.5rem; }
         .stat-card { @apply bg-white p-4 rounded-lg shadow border border-gray-200 text-center; }
@@ -111,12 +113,18 @@
 
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- MapLibre GL JS -->
+<script src="https://unpkg.com/maplibre-gl@3.3.1/dist/maplibre-gl.js"></script>
+<!-- MapLibre GL Leaflet Plugin -->
+<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.20/leaflet-maplibre-gl.js"></script>
 <script>
     // Initialize Map
     const map = L.map('map').setView([39.8283, -98.5795], 4); // Center of US
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 18,
+    
+    // OpenFreeMap using MapLibre GL
+    L.maplibreGL({
+        style: 'https://tiles.openfreemap.org/styles/liberty',
+        attribution: '<a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> <a href="https://www.openmaptiles.org/" target="_blank">&copy; OpenMapTiles</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>'
     }).addTo(map);
 
     let routeLayer = null;
