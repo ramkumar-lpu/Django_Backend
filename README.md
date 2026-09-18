@@ -174,28 +174,33 @@ curl -X POST http://localhost:8000/api/route/ \
 
 ## Fuel Optimization Algorithm
 
-The optimizer uses a **Cheapest-Forward Greedy** strategy:
+### Baseline vs New Approach
+**Baseline:** "Shortest/fastest route followed by fuel-stop optimization."
+**New approach:** "Multiple OSRM route alternatives are evaluated against the real fuel-station dataset. Each candidate route receives independent fuel-stop optimization, and feasible routes are compared using total fuel procurement cost, with distance and duration as tie-breakers."
 
+### Approach Details
+- **Route alternatives** are supplied by OSRM.
+- **Fuel prices** come directly from the assessment CSV.
+- **Station coordinates** are city/state geocoding approximations.
+- **The optimizer** is deterministic.
+- **Note:** The system does not claim that this is a newly invented mathematical algorithm. The primary engineering contribution is the **joint route-alternative and fuel-cost evaluation** architecture.
+
+### Station-Level Strategy (Cheapest-Forward Greedy)
+Once a route is selected, the algorithm optimizes station stops:
 1. **Vehicle starts with a full tank** (50 gallons = 500 miles range)
 2. At each position, look ahead at all reachable stations within range
 3. **If a cheaper-or-equal station exists ahead**: buy only enough fuel to reach it
 4. **If no cheaper station ahead**: fill the tank completely and drive to the cheapest reachable station
 5. **Finish is always "free"** (price = 0), so if the destination is reachable, drive directly
 
-This is a mathematically verified cost-minimizing greedy strategy for the fixed-route continuous-refueling model because:
-- We never buy expensive fuel when cheap fuel is reachable ahead
-- We fill up completely only when the current station is the cheapest option within range
-- We buy the minimum amount at expensive stations
-
-**The initial full tank is NOT counted as a purchase.**
+This is a mathematically verified cost-minimizing greedy strategy for the fixed-route continuous-refueling model.
 
 ### Assumptions & Limitations
 - **Vehicle specs:** 10 MPG, 500-mile max range.
 - **Initial fuel:** Vehicle starts with a full tank (50 gallons), which is "free" (not counted towards total cost).
-- **Geocoding Approximation:** Station coordinates are geocoded offline at the **City + State** level, rather than exact street addresses, due to batch geocoding limitations and processing times. This is an approximation.
-- **Performance:** Offline preprocessing eliminates runtime CSV parsing and rate-limits. Runtime requires 1 routing call and 2 geocoding calls per request.
-- **Minimal API calls**: 1 routing call + 2 geocoding calls per request (all cached on repeat)
-- **No CSV parsing at runtime**: Preprocessed JSON is loaded once into memory
+- **Geocoding Approximation:** Station coordinates are geocoded offline at the **City + State** level.
+- **Minimal API calls**: 1 routing call (requesting alternatives) + 2 geocoding calls per request (all cached).
+- **No CSV parsing at runtime**: Preprocessed JSON is loaded once into memory.
 
 ## Testing
 

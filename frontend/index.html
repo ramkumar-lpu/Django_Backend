@@ -55,7 +55,7 @@
 
             <!-- Stats (Hidden Initially) -->
             <div id="resultsSummary" class="hidden space-y-4">
-                <h3 class="font-semibold text-lg text-gray-900 border-b pb-2">Trip Summary</h3>
+                <h3 class="font-semibold text-lg text-gray-900 border-b pb-2">Selected Route Summary</h3>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="stat-card">
                         <div id="valDist" class="stat-value">-</div>
@@ -73,6 +73,14 @@
                         <div id="valStops" class="stat-value">-</div>
                         <div class="stat-label">Stops</div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Route Comparison (Hidden Initially) -->
+            <div id="routeComparison" class="hidden space-y-4">
+                <h3 class="font-semibold text-lg text-gray-900 border-b pb-2">Route Comparison</h3>
+                <div id="comparisonList" class="space-y-3">
+                    <!-- Comparison items injected via JS -->
                 </div>
             </div>
         </div>
@@ -127,18 +135,21 @@
         attribution: '<a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> <a href="https://www.openmaptiles.org/" target="_blank">&copy; OpenMapTiles</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>'
     }).addTo(map);
 
-    let routeLayer = null;
+    let routeLayers = [];
     let markers = [];
 
     const form = document.getElementById('routeForm');
     const submitBtn = document.getElementById('submitBtn');
     const errorBox = document.getElementById('errorBox');
     const resultsSummary = document.getElementById('resultsSummary');
+    const routeComparison = document.getElementById('routeComparison');
+    const comparisonList = document.getElementById('comparisonList');
     const stopsContainer = document.getElementById('stopsContainer');
     const stopsTableBody = document.getElementById('stopsTableBody');
 
     function clearMap() {
-        if (routeLayer) map.removeLayer(routeLayer);
+        routeLayers.forEach(layer => map.removeLayer(layer));
+        routeLayers = [];
         markers.forEach(m => map.removeLayer(m));
         markers = [];
     }
@@ -154,6 +165,7 @@
         submitBtn.textContent = 'Calculating (this may take a few seconds)...';
         errorBox.classList.add('hidden');
         resultsSummary.classList.add('hidden');
+        routeComparison.classList.add('hidden');
         stopsContainer.classList.add('hidden');
         clearMap();
 
@@ -181,22 +193,93 @@
             document.getElementById('valStops').textContent = data.fuel_stops.length;
             resultsSummary.classList.remove('hidden');
 
-            // Draw Route
-            if (data.route.geometry) {
-                // GeoJSON coordinates are [lon, lat], Leaflet expects [lat, lon]
+            // Render Route Comparison
+            if (data.route_comparison && data.route_comparison.length > 0) {
+                comparisonList.innerHTML = '';
+                routeComparison.classList.remove('hidden');
+                
+                data.route_comparison.forEach((r, idx) => {
+                    const isSelected = r.selected;
+                    const card = document.createElement('div');
+                    card.className = `p-3 rounded-lg border text-sm ${isSelected ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}`;
+                    
+                    if (r.feasible) {
+                        card.innerHTML = `
+                            <div class="flex justify-between font-semibold ${isSelected ? 'text-blue-700' : 'text-gray-700'}">
+                                <span>Route ${idx + 1} ${isSelected ? '(Selected)' : ''}</span>
+                                <span>$${r.fuel_cost.toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between text-gray-500 mt-1">
+                                <span>${r.distance_miles.toFixed(1)} mi</span>
+                                <span>${r.stop_count} stops</span>
+                            </div>
+                        `;
+                    } else {
+                        card.innerHTML = `
+                            <div class="flex justify-between font-semibold text-gray-400">
+                                <span class="line-through">Route ${idx + 1}</span>
+                                <span>Infeasible</span>
+                            </div>
+                            <div class="text-gray-400 mt-1">${r.distance_miles.toFixed(1)} mi</div>
+                        `;
+                    }
+                    comparisonList.appendChild(card);
+                    
+                    // Draw Geometry on Map
+                    if (r.geometry) {
+                        const style = isSelected 
+                            ? { color: '#2563eb', weight: 5, opacity: 0.9 }
+                            : { color: '#9ca3af', weight: 3, opacity: 0.5 };
+                        
+                        const geoJsonLayer = L.geoJSON(r.geometry, { style }).addTo(map);
+                        routeLayers.push(geoJsonLayer);
+                        
+                        if (isSelected) {
+                            map.fitBounds(geoJsonLayer.getBounds(), { padding: [30, 30] });
+                            // Bring selected route to front
+                            geoJsonLayer.bringToFront();
+                        }
+                    }
+                });
+            } else if (data.route.geometry) {
+                // Fallback if no comparison array
                 const geoJsonLayer = L.geoJSON(data.route.geometry, {
-                    style: { color: '#2563eb', weight: 4, opacity: 0.7 }
+                    style: { color: '#2563eb', weight: 5, opacity: 0.9 }
                 }).addTo(map);
-                routeLayer = geoJsonLayer;
+                routeLayers.push(geoJsonLayer);
                 map.fitBounds(geoJsonLayer.getBounds(), { padding: [30, 30] });
+            }
 
-                // Add Start/End Markers
+            // Custom Icons
+            const startIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: "<div style='background-color:#16a34a; color:white; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-weight:bold; border:2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);'>S</div>",
+                iconSize: [28, 28],
+                iconAnchor: [14, 14]
+            });
+            
+            const endIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: "<div style='background-color:#2563eb; color:white; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-weight:bold; border:2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);'>E</div>",
+                iconSize: [28, 28],
+                iconAnchor: [14, 14]
+            });
+            
+            const fuelIcon = (num) => L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style='background-color:#dc2626; color:white; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:12px; border:2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);'>${num}</div>`,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+
+            // Add Start/End Markers based on selected route
+            if (data.route.geometry) {
                 const coords = data.route.geometry.coordinates;
                 const startCoord = coords[0];
                 const endCoord = coords[coords.length - 1];
                 
-                markers.push(L.marker([startCoord[1], startCoord[0]]).addTo(map).bindPopup(`<b>Start:</b> ${start}`));
-                markers.push(L.marker([endCoord[1], endCoord[0]]).addTo(map).bindPopup(`<b>Finish:</b> ${finish}`));
+                markers.push(L.marker([startCoord[1], startCoord[0]], {icon: startIcon}).addTo(map).bindPopup(`<b>START &mdash; ${data.start.input}</b>`));
+                markers.push(L.marker([endCoord[1], endCoord[0]], {icon: endIcon}).addTo(map).bindPopup(`<b>DESTINATION &mdash; ${data.finish.input}</b>`));
             }
 
             // Update Table & Stop Markers
@@ -205,22 +288,22 @@
                 stopsContainer.classList.remove('hidden');
                 
                 data.fuel_stops.forEach((stop, index) => {
+                    const cost = stop.price_per_gallon * stop.gallons_purchased;
+                    
                     // Marker
-                    const m = L.circleMarker([stop.latitude, stop.longitude], {
-                        color: '#dc2626',
-                        fillColor: '#ef4444',
-                        fillOpacity: 0.8,
-                        radius: 6
-                    }).addTo(map).bindPopup(`
-                        <b>Stop ${index + 1}: ${stop.truckstop_name}</b><br>
-                        $${stop.price_per_gallon.toFixed(2)}/gal<br>
-                        Bought: ${stop.gallons_purchased.toFixed(1)} gal
+                    const m = L.marker([stop.latitude, stop.longitude], {icon: fuelIcon(index + 1)})
+                    .addTo(map).bindPopup(`
+                        <b>FUEL STOP #${index + 1}</b><br>
+                        ${stop.truckstop_name}<br>
+                        ${stop.city}, ${stop.state}<br>
+                        Price: $${stop.price_per_gallon.toFixed(3)}/gal<br>
+                        Purchased: ${stop.gallons_purchased.toFixed(1)} gal<br>
+                        Cost: $${cost.toFixed(2)}
                     `);
                     markers.push(m);
 
                     // Table Row
                     const tr = document.createElement('tr');
-                    const cost = stop.price_per_gallon * stop.gallons_purchased;
                     tr.innerHTML = `
                         <td class="px-4 py-3 whitespace-nowrap">${index + 1}</td>
                         <td class="px-4 py-3"><div class="font-medium text-gray-900">${stop.truckstop_name}</div><div class="text-xs text-gray-500">${stop.city}, ${stop.state}</div></td>

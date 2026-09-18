@@ -70,7 +70,7 @@ class RouteAPITests(TestCase):
         self.assertEqual(response.status_code, 400)
 
     @patch("api.views.StationRepository.get_all_stations", return_value=MOCK_STATIONS)
-    @patch("api.views.RoutingService.get_route", return_value=MOCK_ROUTE)
+    @patch("api.views.RoutingService.get_routes", return_value=[MOCK_ROUTE])
     @patch("api.views.GeocodingService.geocode")
     def test_successful_short_route(self, mock_geocode, mock_route, mock_stations):
         """A short route within initial tank range — should return 0 fuel stops."""
@@ -114,7 +114,7 @@ class RouteAPITests(TestCase):
         self.assertIn("error", response.json())
 
     @patch("api.views.StationRepository.get_all_stations", return_value=[])
-    @patch("api.views.RoutingService.get_route")
+    @patch("api.views.RoutingService.get_routes")
     @patch("api.views.GeocodingService.geocode")
     def test_long_route_no_stations(self, mock_geocode, mock_route, mock_stations):
         """Long route with no fuel stations available — should fail gracefully."""
@@ -122,11 +122,13 @@ class RouteAPITests(TestCase):
             (40.7128, -74.0060),
             (34.0522, -118.2437),
         ]
-        mock_route.return_value = {
-            "distance_miles": 2800.0,
-            "duration_minutes": 2500.0,
-            "geometry": MOCK_ROUTE_GEOMETRY,
-        }
+        mock_route.return_value = [
+            {
+                "distance_miles": 2800.0,
+                "duration_minutes": 2500.0,
+                "geometry": MOCK_ROUTE_GEOMETRY,
+            }
+        ]
         response = self.client.post(
             self.url,
             {"start": "New York, NY", "finish": "Los Angeles, CA"},
@@ -135,7 +137,7 @@ class RouteAPITests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("error", response.json())
 
-    @patch("api.views.RoutingService.get_route")
+    @patch("api.views.RoutingService.get_routes")
     @patch("api.views.GeocodingService.geocode")
     def test_routing_api_failure(self, mock_geocode, mock_route):
         mock_geocode.side_effect = [

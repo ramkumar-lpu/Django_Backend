@@ -50,39 +50,18 @@ class RouteView(APIView):
             start_coords = GeocodingService.geocode(start_str)
             finish_coords = GeocodingService.geocode(finish_str)
 
-            # 3. Get driving route (cached, single API call)
-            route_data = RoutingService.get_route(start_coords, finish_coords)
-            total_distance_miles = route_data['distance_miles']
+            # 3. Get driving routes (cached, single API call with alternatives)
+            candidate_routes = RoutingService.get_routes(start_coords, finish_coords)
 
-            # 4. Load stations and filter spatially
-            all_stations = StationRepository.get_all_stations()
-            radius = float(os.environ.get('ROUTE_STATION_RADIUS_MILES', 10.0))
-            candidate_stations = SpatialService.filter_and_project_stations(
-                route_data['geometry'], all_stations, radius_miles=radius,
-            )
-
-            # Convert route_ratio to absolute distance and prepare for optimizer
-            for s in candidate_stations:
-                s['distance_from_start'] = round(
-                    s['route_ratio'] * total_distance_miles, 2
-                )
-                s['price'] = s['price_per_gallon']
-
-            # 5. Run fuel optimization
-            max_range = float(os.environ.get('VEHICLE_MAX_RANGE_MILES', 500))
-            mpg = float(os.environ.get('VEHICLE_MPG', 10))
-
-            optimization_result = OptimizationService.calculate_optimal_stops(
-                route_distance_miles=total_distance_miles,
-                stations=candidate_stations,
-                max_range_miles=max_range,
-                mpg=mpg,
-            )
+            # 4 & 5. Evaluate all routes for fuel optimization
+            from .services.route_evaluator_service import RouteEvaluatorService
+            evaluation = RouteEvaluatorService.evaluate_candidates(candidate_routes)
+            best_route = evaluation["selected_route"]
 
             # 6. Build response
             # Clean up fuel stops for response (remove internal keys)
             clean_stops = []
-            for stop in optimization_result['fuel_stops']:
+            for stop in best_route['fuel_stops']:
                 clean_stops.append({
                     "station_id": stop.get('station_id'),
                     "truckstop_name": stop.get('truckstop_name', ''),
@@ -97,7 +76,8 @@ class RouteView(APIView):
                     "cost": stop.get('cost'),
                 })
 
-            total_consumed = round(total_distance_miles / mpg, 2)
+            max_range = float(os.environ.get('VEHICLE_MAX_RANGE_MILES', 500.0))
+            mpg = float(os.environ.get('VEHICLE_MPG', 10.0))
 
             response_data = {
                 "start": {
@@ -111,20 +91,21 @@ class RouteView(APIView):
                     "longitude": finish_coords[1],
                 },
                 "route": {
-                    "distance_miles": total_distance_miles,
-                    "duration_minutes": route_data['duration_minutes'],
-                    "geometry": route_data['geometry'],
+                    "distance_miles": best_route['distance_miles'],
+                    "duration_minutes": best_route['duration_minutes'],
+                    "geometry": best_route['geometry'],
                 },
                 "vehicle": {
                     "max_range_miles": max_range,
                     "mpg": mpg,
                 },
                 "fuel": {
-                    "total_consumed_gallons": total_consumed,
-                    "total_purchased_gallons": optimization_result['total_purchased_gallons'],
-                    "total_cost": optimization_result['total_cost'],
+                    "total_consumed_gallons": best_route['fuel_consumed_gallons'],
+                    "total_purchased_gallons": best_route['fuel_purchased_gallons'],
+                    "total_cost": best_route['fuel_cost'],
                 },
                 "fuel_stops": clean_stops,
+                "route_comparison": evaluation['route_comparison']
             }
 
             return Response(response_data, status=status.HTTP_200_OK)

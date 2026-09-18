@@ -23,22 +23,22 @@ class RoutingService:
     CACHE_TIMEOUT = int(os.environ.get('CACHE_TIMEOUT', 86400))
 
     @classmethod
-    def get_route(cls, start_coords: tuple, finish_coords: tuple) -> dict:
+    def get_routes(cls, start_coords: tuple, finish_coords: tuple) -> list[dict]:
         """
-        Get driving route between two coordinate pairs.
+        Get alternative driving routes between two coordinate pairs.
 
         Args:
             start_coords: (latitude, longitude) of start location
             finish_coords: (latitude, longitude) of finish location
 
         Returns:
-            dict with keys: distance_miles, duration_minutes, geometry
+            list of dicts with keys: distance_miles, duration_minutes, geometry
 
         Raises:
             Exception: If the routing API fails or returns no route.
         """
         cache_key = (
-            f"route_{start_coords[0]:.6f}_{start_coords[1]:.6f}_"
+            f"routes_{start_coords[0]:.6f}_{start_coords[1]:.6f}_"
             f"{finish_coords[0]:.6f}_{finish_coords[1]:.6f}"
         )
         cached_result = cache.get(cache_key)
@@ -54,6 +54,7 @@ class RoutingService:
         params = {
             "overview": "full",
             "geometries": "geojson",
+            "alternatives": "true"
         }
 
         response = requests.get(url, params=params, timeout=30)
@@ -65,17 +66,24 @@ class RoutingService:
                 f"Routing failed: {data.get('message', 'Unknown error')}"
             )
 
-        route = data["routes"][0]
+        routes_result = []
+        for route in data.get("routes", []):
+            distance_miles = round(route["distance"] * 0.000621371, 2)
+            duration_minutes = round(route["duration"] / 60.0, 2)
+            routes_result.append({
+                "distance_miles": distance_miles,
+                "duration_minutes": duration_minutes,
+                "geometry": route["geometry"],
+            })
 
-        # OSRM returns distance in meters and duration in seconds
-        distance_miles = round(route["distance"] * 0.000621371, 2)
-        duration_minutes = round(route["duration"] / 60.0, 2)
+        if not routes_result:
+            raise Exception("Routing failed: No routes returned")
 
-        result = {
-            "distance_miles": distance_miles,
-            "duration_minutes": duration_minutes,
-            "geometry": route["geometry"],  # GeoJSON LineString
-        }
+        cache.set(cache_key, routes_result, timeout=cls.CACHE_TIMEOUT)
+        return routes_result
 
-        cache.set(cache_key, result, timeout=cls.CACHE_TIMEOUT)
-        return result
+    @classmethod
+    def get_route(cls, start_coords: tuple, finish_coords: tuple) -> dict:
+        """ Backward compatibility for single route tests. """
+        routes = cls.get_routes(start_coords, finish_coords)
+        return routes[0]
