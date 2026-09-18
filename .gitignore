@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+*.log
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Preprocessed data (regeneratable)
+data/geocoding_cache.json
+data/geocoding_failed.json
+
+# Byte-compiled / optimized
+*.egg-info/
+dist/
+build/
